@@ -1,28 +1,43 @@
 """Food analysis schemas."""
 
-from enum import Enum
-from pydantic import BaseModel, Field
+from enum import StrEnum
 
-class ConfidenceLevel(str, Enum):
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+class SchemaModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+
+class ConfidenceLevel(StrEnum):
     """Confidence level for food analysis."""
 
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
 
-class DetectionType(str, Enum):
+
+class DetectionType(StrEnum):
     """Detection type for food analysis."""
 
     visible = "visible"
     inferred = "inferred"
 
-class CalorieRange(BaseModel):
+
+class CalorieRange(SchemaModel):
     """Calorie range for food analysis."""
 
     min: float | None = Field(default=None, ge=0)
     max: float | None = Field(default=None, ge=0)
 
-class NutritionEstimate(BaseModel):
+    @model_validator(mode="after")
+    def validate_range(self) -> "CalorieRange":
+        if self.min is not None and self.max is not None and self.min > self.max:
+            raise ValueError("min não pode ser maior que max.")
+        return self
+
+
+class NutritionEstimate(SchemaModel):
     calories: float | None = Field(default=None, ge=0)
     protein_g: float | None = Field(default=None, ge=0)
     carbohydrates_g: float | None = Field(default=None, ge=0)
@@ -32,7 +47,7 @@ class NutritionEstimate(BaseModel):
     sodium_mg: float | None = Field(default=None, ge=0)
 
 
-class IngredientEstimate(BaseModel):
+class IngredientEstimate(SchemaModel):
     name: str
     detection_type: DetectionType
     estimated_quantity: str | None = None
@@ -41,7 +56,7 @@ class IngredientEstimate(BaseModel):
     confidence: ConfidenceLevel
 
 
-class FoodComponent(BaseModel):
+class FoodComponent(SchemaModel):
     name: str
     description: str
     estimated_portion: str | None = None
@@ -51,7 +66,7 @@ class FoodComponent(BaseModel):
     confidence: ConfidenceLevel
 
 
-class FoodAnalysis(BaseModel):
+class FoodAnalysis(SchemaModel):
     dish_name: str
     description: str
     components: list[FoodComponent]
@@ -65,3 +80,15 @@ class FoodAnalysis(BaseModel):
 
     requires_user_confirmation: bool
     follow_up_questions: list[str]
+
+    @model_validator(mode="after")
+    def validate_total_calories(self) -> "FoodAnalysis":
+        calories = self.total_nutrition.calories
+        lower = self.total_calorie_range.min
+        upper = self.total_calorie_range.max
+
+        if calories is not None and lower is not None and calories < lower:
+            raise ValueError("calories não pode ser menor que a faixa mínima.")
+        if calories is not None and upper is not None and calories > upper:
+            raise ValueError("calories não pode ser maior que a faixa máxima.")
+        return self

@@ -1,9 +1,11 @@
 """Service dependencies."""
+
 from functools import lru_cache
 
 from openai import AsyncOpenAI
 
-from app.core.config import Settings, get_settings
+from app.core.config import get_settings
+from app.integrations.openai.client import create_openai_client
 from app.integrations.openai.food_analyzer import OpenAIFoodAnalyzer
 from app.services.food_analysis_service import FoodAnalysisService
 from app.services.image_preprocessor import ImagePreprocessor
@@ -19,11 +21,7 @@ def get_openai_client() -> AsyncOpenAI:
     """
     settings = get_settings()
 
-    return AsyncOpenAI(
-        api_key=settings.openai_api_key,
-        timeout=settings.openai_timeout_seconds,
-        max_retries=settings.openai_max_retries,
-    )
+    return create_openai_client(settings)
 
 
 @lru_cache
@@ -63,3 +61,13 @@ def get_food_analysis_service() -> FoodAnalysisService:
         image_preprocessor=get_image_preprocessor(),
         analyzer=get_food_analyzer(),
     )
+
+
+async def close_services() -> None:
+    if get_openai_client.cache_info().currsize:
+        await get_openai_client().close()
+
+    get_food_analysis_service.cache_clear()
+    get_food_analyzer.cache_clear()
+    get_image_preprocessor.cache_clear()
+    get_openai_client.cache_clear()
