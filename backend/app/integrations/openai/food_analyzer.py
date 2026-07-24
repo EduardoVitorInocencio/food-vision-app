@@ -1,0 +1,1 @@
+"""OpenAI food analyzer integration."""
