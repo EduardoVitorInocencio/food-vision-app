@@ -7,6 +7,8 @@ def configure_logging(level: str = "INFO") -> None:
     """Configure application and Uvicorn logs with one consistent format."""
 
     normalized_level = level.upper()
+    # One shared dictConfig keeps application, access, and error logs aligned
+    # without relying on framework defaults.
     dictConfig(
         {
             "version": 1,
