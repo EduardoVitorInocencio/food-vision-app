@@ -1,1 +1,1 @@
-
+"""Specialized application modules."""
