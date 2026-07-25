@@ -1,30 +1,53 @@
 # Food Vision API
 
-Backend FastAPI para análise estruturada de imagens de alimentos com a OpenAI.
-A API recebe uma imagem de um prato, prepara o arquivo para análise multimodal e
-retorna informações sobre componentes, ingredientes, porções, calorias e
-nutrientes.
+Backend FastAPI modular para análise estruturada de imagens de alimentos com a
+OpenAI. A API oferece uma camada central de chat e mantém o endpoint nutricional
+original para compatibilidade.
 
 ## Arquitetura
 
-O backend utiliza uma arquitetura em camadas, com responsabilidades separadas:
+O backend separa transporte HTTP, orquestração de conversa, módulos de negócio e
+infraestrutura compartilhada:
 
-- **API:** define os endpoints, valida os parâmetros HTTP e fecha os uploads.
-- **Services:** orquestra o processamento da imagem e a análise nutricional.
-- **Integrations:** encapsula o cliente e a Responses API da OpenAI.
-- **Schemas:** define e valida o contrato público da resposta.
-- **Core:** centraliza configurações, logging e exceções da aplicação.
-- **Dependencies:** constrói e reutiliza os serviços usados pelo FastAPI.
+- **API:** versiona e agrega as rotas em `api/v1`; o health check permanece fora
+  do prefixo versionado.
+- **Chat:** identifica a intenção, consulta o contexto, executa somente módulos
+  registrados e constrói uma resposta uniforme.
+- **Modules:** isola funcionalidades de negócio. Apenas
+  `nutrition_analysis` está implementado.
+- **Integrations:** centraliza a criação e o lifecycle do cliente OpenAI.
+- **Services:** mantém utilitários compartilhados, como o preprocessamento de
+  imagens.
+- **Core e dependencies:** concentram configuração, erros, logging e composição
+  explícita dos serviços.
 
 ```text
 backend/
 ├── app/
 │   ├── main.py                         # FastAPI, CORS, routers e lifespan
 │   ├── api/
-│   │   ├── router.py                   # Agregação das rotas versionadas
-│   │   └── routes/
-│   │       ├── food_analysis.py        # POST /api/v1/food-analysis
-│   │       └── health.py               # GET /health
+│   │   └── v1/
+│   │       ├── router.py               # Agregação das rotas versionadas
+│   │       └── routes/
+│   │           ├── chat.py             # POST /api/v1/chat/messages
+│   │           ├── food_analysis.py    # Endpoint compatível
+│   │           └── health.py           # GET /health
+│   ├── chat/
+│   │   ├── schemas.py                  # Contratos unificados
+│   │   ├── service.py                  # Orquestração central
+│   │   ├── intent_router.py            # Classificação determinística
+│   │   ├── context_manager.py          # Contexto limitado em memória
+│   │   └── response_builder.py         # Construção da resposta pública
+│   ├── modules/
+│   │   ├── nutrition_analysis/
+│   │   │   ├── schemas.py              # Contrato nutricional preservado
+│   │   │   ├── service.py              # Caso de uso e adaptador do chat
+│   │   │   ├── analyzer.py             # Responses API
+│   │   │   └── prompts.py              # Prompt nutricional
+│   │   ├── food_identification/        # Pacote vazio
+│   │   ├── allergen_analysis/          # Pacote vazio
+│   │   ├── meal_comparison/            # Pacote vazio
+│   │   └── knowledge_rag/              # Pacote vazio
 │   ├── core/
 │   │   ├── config.py                   # Settings e leitura do .env
 │   │   ├── exceptions.py               # Erros e handler global
@@ -34,44 +57,69 @@ backend/
 │   ├── integrations/
 │   │   └── openai/
 │   │       ├── client.py               # Construção do AsyncOpenAI
-│   │       ├── food_analyzer.py        # Responses API e Structured Outputs
-│   │       └── prompts.py              # Prompt de análise alimentar
-│   ├── schemas/
-│   │   └── food_analysis.py            # Modelos Pydantic da resposta
 │   └── services/
-│       ├── food_analysis_service.py    # Orquestração do caso de uso
 │       └── image_preprocessor.py       # Validação e preparação da imagem
 └── tests/
-    ├── integration/                    # Endpoints e dependency overrides
-    └── unit/                           # Config, schemas, imagem e OpenAI
+    ├── integration/                    # Endpoints sem OpenAI real
+    └── unit/                           # Chat, módulo e infraestrutura
 ```
 
-### Dependências entre camadas
+### Fluxo do chat
 
 ```mermaid
 flowchart LR
-    Client["Cliente web ou desktop"]
-    API["Rotas FastAPI"]
-    Service["FoodAnalysisService"]
-    Image["ImagePreprocessor"]
-    Analyzer["OpenAIFoodAnalyzer"]
-    OpenAI["OpenAI Responses API"]
-    Schema["FoodAnalysis (Pydantic)"]
+    Client["Cliente"]
+    ChatRoute["POST /api/v1/chat/messages"]
+    ChatService["ChatService"]
+    Context["ContextManager"]
+    Intent["IntentRouter"]
+    Registry["Module Registry"]
+    Nutrition["Nutrition Analysis"]
+    Response["ResponseBuilder"]
 
-    Client -->|multipart image| API
-    API --> Service
-    Service --> Image
-    Image -->|PreparedImage| Analyzer
-    Analyzer -->|responses.parse| OpenAI
-    OpenAI -->|Structured Output| Schema
-    Schema --> API
-    API -->|JSON| Client
+    Client --> ChatRoute
+    ChatRoute --> ChatService
+    ChatService --> Context
+    ChatService --> Intent
+    Intent --> Registry
+    Registry --> Nutrition
+    Nutrition --> Response
+    Response --> ChatRoute
+    ChatRoute --> Client
 ```
 
-## Fluxo de análise
+O `ChatService` valida a entrada, preserva ou cria o `conversation_id`, recupera
+o contexto, solicita a classificação ao `IntentRouter`, consulta o registro
+explícito de módulos e executa somente o módulo disponível. Ele não acessa a
+OpenAI nem processa imagens diretamente.
+
+O `IntentRouter` usa regras determinísticas, sem chamada adicional a modelos. O
+registro contém apenas `nutrition_analysis`; solicitações reconhecidas para
+módulos futuros recebem `module: "unavailable"` e nunca executam os pacotes
+vazios.
+
+O `ContextManager` mantém um histórico limitado apenas em memória. Imagens,
+Base64, uploads, clientes e chaves não são armazenados. Todo contexto é perdido
+quando a aplicação reinicia.
+
+### Módulos
+
+| Módulo | Status | Registrado no chat |
+| --- | --- | --- |
+| `nutrition_analysis` | Implementado | Sim |
+| `food_identification` | Estrutura vazia | Não |
+| `allergen_analysis` | Estrutura vazia | Não |
+| `meal_comparison` | Estrutura vazia | Não |
+| `knowledge_rag` | Estrutura vazia | Não |
+
+RAG, fine-tuning, autenticação, banco de dados, Redis e persistência de histórico
+não estão implementados.
+
+### Fluxo nutricional
 
 1. O cliente envia `multipart/form-data` com o campo `image`.
-2. A rota obtém o `FoodAnalysisService` por injeção de dependência.
+2. A rota compatível ou o adaptador do chat reutiliza o mesmo
+   `FoodAnalysisService`.
 3. O `ImagePreprocessor` valida o MIME declarado e lê no máximo o limite
    configurado mais um byte.
 4. O Pillow verifica o conteúdo e confirma que o formato real é JPEG, PNG ou
@@ -84,7 +132,9 @@ flowchart LR
    o schema `FoodAnalysis`.
 8. A saída estruturada é validada pelo Pydantic, incluindo valores não negativos,
    finitude numérica e coerência da faixa calórica.
-9. A rota devolve o JSON validado e fecha o `UploadFile`.
+9. A rota devolve o JSON validado e fecha o `UploadFile`. No chat, o resultado
+   nutricional fica em `data` e o texto é derivado desse mesmo resultado, sem
+   segunda chamada à OpenAI.
 
 Erros de upload, processamento, configuração e comunicação externa são
 convertidos pelo handler global em respostas seguras e consistentes. A chave da
@@ -109,7 +159,30 @@ Resposta:
 }
 ```
 
-### Análise de alimento
+### Chat
+
+```http
+POST /api/v1/chat/messages
+Content-Type: multipart/form-data
+```
+
+| Campo | Tipo | Obrigatório |
+| --- | --- | --- |
+| `message` | string | Não, quando uma imagem for enviada |
+| `image` | arquivo | Não, quando uma mensagem for enviada |
+| `conversation_id` | string | Não |
+
+Pelo menos `message` ou `image` deve ser informado. A resposta sempre usa o
+contrato `ChatResponse`, com `conversation_id`, `message_id`, `role`, `answer`,
+`intent`, `module`, `data` e `suggested_actions`.
+
+```powershell
+curl.exe -X POST "http://localhost:8000/api/v1/chat/messages" `
+  -F "message=Quantas calorias tem este prato?" `
+  -F "image=@C:\caminho\prato.jpg"
+```
+
+### Análise de alimento compatível
 
 ```http
 POST /api/v1/food-analysis
@@ -129,7 +202,8 @@ curl.exe -X POST "http://localhost:8000/api/v1/food-analysis" `
   -F "image=@C:\caminho\prato.jpg"
 ```
 
-A resposta segue o schema `FoodAnalysis`, com:
+Este endpoint foi preservado sem alteração de contrato. A resposta segue o
+schema `FoodAnalysis`, com:
 
 - identificação e descrição do prato;
 - componentes e ingredientes visíveis ou inferidos;
