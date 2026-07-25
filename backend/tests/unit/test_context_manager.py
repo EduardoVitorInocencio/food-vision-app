@@ -8,6 +8,8 @@ from app.chat.schemas import ChatIntent
 
 @pytest.mark.asyncio
 async def test_creates_updates_and_clears_context() -> None:
+    """Create, update, retrieve, and clear one conversation."""
+
     manager = ContextManager()
 
     empty = await manager.get("conversation")
@@ -31,6 +33,8 @@ async def test_creates_updates_and_clears_context() -> None:
 
 @pytest.mark.asyncio
 async def test_limits_history_and_removes_sensitive_or_image_data() -> None:
+    """Bound message history and recursively remove unsafe state."""
+
     manager = ContextManager(max_messages=3)
     unsafe_updates = {
         "image": "data:image/jpeg;base64,secret",
