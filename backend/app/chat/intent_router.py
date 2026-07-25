@@ -58,5 +58,7 @@ class IntentRouter:
 
 
 def _normalize(message: str | None) -> str:
+    """Lowercase, trim, and remove accents before keyword matching."""
+
     translation = str.maketrans("áàâãéêíóôõúç", "aaaaeeiooouc")
     return (message or "").strip().lower().translate(translation)
