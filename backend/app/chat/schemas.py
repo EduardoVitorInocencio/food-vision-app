@@ -9,6 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class ChatSchema(BaseModel):
     """Strict base model for chat contracts."""
 
+    # Reject unknown keys so request and response payloads stay explicit and
+    # easy to validate in tests.
     model_config = ConfigDict(extra="forbid")
 
 
@@ -27,6 +29,8 @@ class ChatIntent(StrEnum):
 class ModuleResult(ChatSchema):
     """Internal result returned by a registered chat module."""
 
+    # The defaults keep module implementations simple: they only populate the
+    # fields they actually produce.
     answer: str
     intent: ChatIntent
     module: str
@@ -38,6 +42,8 @@ class ModuleResult(ChatSchema):
 class ChatResponse(ChatSchema):
     """Uniform assistant response returned to API clients."""
 
+    # The public response mirrors the module result while fixing the role to
+    # the assistant side of the conversation.
     conversation_id: str
     message_id: str
     role: Literal["assistant"] = "assistant"
@@ -58,6 +64,8 @@ class ContextMessage(ChatSchema):
 class ChatContext(ChatSchema):
     """Serializable in-memory state for one conversation."""
 
+    # This shape is intentionally shallow so the in-memory store can be copied
+    # and sanitized without complex recursion.
     conversation_id: str
     messages: list[ContextMessage] = Field(default_factory=list)
     last_intent: ChatIntent | None = None
