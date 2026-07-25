@@ -24,6 +24,8 @@ async def test_detects_supported_and_unavailable_intents(
     has_image: bool,
     expected: ChatIntent,
 ) -> None:
+    """Classify supported and planned intents with deterministic rules."""
+
     router = IntentRouter()
 
     result = await router.detect(
