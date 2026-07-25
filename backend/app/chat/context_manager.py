@@ -17,6 +17,8 @@ class ContextManager:
             raise ValueError("max_messages deve ser maior que zero.")
         self._max_messages = max_messages
         self._contexts: dict[str, ChatContext] = {}
+        # One lock protects both creation and mutation so concurrent requests
+        # cannot overwrite the same process-local conversation.
         self._lock = asyncio.Lock()
 
     async def get(self, conversation_id: str) -> ChatContext:
@@ -27,6 +29,8 @@ class ContextManager:
             if context is None:
                 context = ChatContext(conversation_id=conversation_id)
                 self._contexts[conversation_id] = context
+            # Callers receive a snapshot and cannot mutate shared state after
+            # the lock is released.
             return context.model_copy(deep=True)
 
     async def update(
@@ -52,10 +56,13 @@ class ContextManager:
             context.messages.append(
                 ContextMessage(role="assistant", content=assistant_message)
             )
+            # The bound counts both user and assistant entries, not turns.
             context.messages = context.messages[-self._max_messages :]
             context.last_intent = intent
             context.last_module = module
             if context_updates:
+                # Sanitize before merging because module results may contain
+                # nested values that are unsafe or too large to retain.
                 context.state.update(_sanitize_mapping(context_updates))
             return context.model_copy(deep=True)
 
@@ -78,6 +85,8 @@ def _sanitize_mapping(values: dict[str, Any]) -> dict[str, Any]:
     sanitized: dict[str, Any] = {}
     for key, value in values.items():
         normalized_key = key.lower()
+        # Substring matching also blocks derived names such as
+        # "original_image_data_url" without maintaining an exhaustive list.
         if any(blocked in normalized_key for blocked in _BLOCKED_CONTEXT_KEYS):
             continue
         sanitized[key] = _sanitize_value(value)
