@@ -20,7 +20,10 @@ class ChatModule(Protocol):
         message: str | None,
         image: UploadFile | None,
         context: ChatContext,
-    ) -> ModuleResult: ...
+    ) -> ModuleResult:
+        """Execute one module interaction and return the common result."""
+
+        ...
 
 
 class ChatService:
@@ -34,6 +37,8 @@ class ChatService:
         response_builder: ResponseBuilder,
         modules: dict[ChatIntent, ChatModule],
     ) -> None:
+        """Store orchestration collaborators and the explicit module registry."""
+
         self.intent_router = intent_router
         self.context_manager = context_manager
         self.response_builder = response_builder
