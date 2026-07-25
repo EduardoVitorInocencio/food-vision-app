@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 class SchemaModel(BaseModel):
     """Strict base model for finite nutritional values."""
 
+    # Reject extra keys and non-finite values so downstream serialization stays
+    # predictable and safe for the public contract.
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
 
@@ -36,6 +38,8 @@ class CalorieRange(SchemaModel):
     def validate_range(self) -> "CalorieRange":
         """Ensure the minimum does not exceed the maximum."""
 
+        # Preserve the declared interval invariant before the model is exposed
+        # to the API or stored in test fixtures.
         if self.min is not None and self.max is not None and self.min > self.max:
             raise ValueError("min não pode ser maior que max.")
         return self
@@ -97,6 +101,8 @@ class FoodAnalysis(SchemaModel):
     def validate_total_calories(self) -> "FoodAnalysis":
         """Ensure total calories remain inside the declared range."""
 
+        # Keep the aggregate estimate consistent with the outer range so the
+        # public payload never states incompatible values.
         calories = self.total_nutrition.calories
         lower = self.total_calorie_range.min
         upper = self.total_calorie_range.max
