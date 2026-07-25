@@ -34,6 +34,8 @@ class CalorieRange(SchemaModel):
 
     @model_validator(mode="after")
     def validate_range(self) -> "CalorieRange":
+        """Ensure the minimum does not exceed the maximum."""
+
         if self.min is not None and self.max is not None and self.min > self.max:
             raise ValueError("min não pode ser maior que max.")
         return self
@@ -93,6 +95,8 @@ class FoodAnalysis(SchemaModel):
 
     @model_validator(mode="after")
     def validate_total_calories(self) -> "FoodAnalysis":
+        """Ensure total calories remain inside the declared range."""
+
         calories = self.total_nutrition.calories
         lower = self.total_calorie_range.min
         upper = self.total_calorie_range.max
