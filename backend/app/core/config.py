@@ -8,6 +8,8 @@ from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
+# Resolve the backend root once so the settings loader always targets the
+# same `.env` file regardless of the current working directory.
 
 
 class Settings(BaseSettings):
@@ -19,6 +21,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+    # Keep defaults grouped by concern so local overrides remain easy to scan.
 
     app_name: str = Field(
         default="Food Vision API",
@@ -39,6 +42,8 @@ class Settings(BaseSettings):
         default=None,
         validation_alias="OPENAI_API_KEY",
     )
+    # The key stays optional until the OpenAI client is actually built, which
+    # keeps read-only endpoints available without secrets.
     openai_vision_model: str = Field(
         default="gpt-4o-mini",
         min_length=1,
@@ -83,6 +88,8 @@ class Settings(BaseSettings):
         else:
             raise ValueError("CORS_ORIGINS deve ser uma lista ou texto.")
 
+        # Accept both `.env` strings and direct list overrides so tests and
+        # local development can use the same model.
         cleaned = [str(origin).strip() for origin in origins if str(origin).strip()]
         if not cleaned:
             raise ValueError("CORS_ORIGINS não pode ser vazio.")
@@ -92,6 +99,8 @@ class Settings(BaseSettings):
     def validate_production_cors(self) -> "Settings":
         """Reject wildcard CORS configuration in production."""
 
+        # Production must not expose a wildcard origin because credentials and
+        # browser protections depend on a concrete allowlist.
         if self.environment.lower() == "production" and "*" in self.cors_origins:
             raise ValueError("CORS_ORIGINS não pode conter '*' em produção.")
         return self
