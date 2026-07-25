@@ -4,6 +4,8 @@ from uuid import uuid4
 
 from app.chat.schemas import ChatIntent, ChatResponse, ModuleResult
 
+# Keep the user-facing explanation centralized so unavailable modules use the
+# same wording regardless of which route triggered them.
 _UNAVAILABLE_MESSAGES = {
     ChatIntent.FOOD_IDENTIFICATION: (
         "O módulo de identificação de alimentos ainda não está disponível."
