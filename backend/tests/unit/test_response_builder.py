@@ -5,6 +5,8 @@ from app.chat.schemas import ChatIntent, ModuleResult
 
 
 def test_converts_module_result_and_generates_identifiers() -> None:
+    """Convert module data and generate conversation/message identifiers."""
+
     builder = ResponseBuilder()
     conversation_id = builder.ensure_conversation_id(None)
     result = ModuleResult(
@@ -23,6 +25,8 @@ def test_converts_module_result_and_generates_identifiers() -> None:
 
 
 def test_builds_unavailable_module_response() -> None:
+    """Build a stable response for a recognized unavailable module."""
+
     response = ResponseBuilder().unavailable(
         "conversation",
         ChatIntent.MEAL_COMPARISON,
