@@ -58,6 +58,8 @@ class ImagePreprocessor:
         if upload.content_type not in self.ALLOWED_CONTENT_TYPES:
             raise UnsupportedImageFormatError("Utilize uma imagem JPEG, PNG ou WebP.")
 
+        # Reading one byte beyond the limit detects oversized uploads without
+        # loading an arbitrarily large request into process memory.
         content = await upload.read(self.max_size_bytes + 1)
 
         if not content:
@@ -70,6 +72,8 @@ class ImagePreprocessor:
             )
 
         try:
+            # Pillow decoding and JPEG encoding are synchronous, so move them
+            # off the event loop used by concurrent FastAPI requests.
             return await run_in_threadpool(self._process_content, content)
         except ApplicationError:
             raise
@@ -98,7 +102,11 @@ class ImagePreprocessor:
                     raise UnsupportedImageFormatError()
                 source.verify()
 
+            # verify() checks integrity but leaves the decoder unusable for
+            # transformations, requiring a fresh Image instance.
             with Image.open(io.BytesIO(content)) as source:
+                # Normalize orientation and color mode before resizing so every
+                # downstream analyzer receives a predictable pixel layout.
                 image = ImageOps.exif_transpose(source).convert("RGB")
                 image.thumbnail(
                     (self.max_dimension, self.max_dimension),
@@ -106,6 +114,8 @@ class ImagePreprocessor:
                 )
 
                 with io.BytesIO() as output:
+                    # A single JPEG representation gives the OpenAI adapter one
+                    # stable MIME type regardless of the original input format.
                     image.save(
                         output,
                         format="JPEG",
