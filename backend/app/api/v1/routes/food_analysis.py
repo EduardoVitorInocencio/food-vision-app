@@ -27,4 +27,5 @@ async def analyze_food(
     try:
         return await service.analyze(image)
     finally:
+        # Mirror the chat route: always release the request upload object.
         await image.close()
