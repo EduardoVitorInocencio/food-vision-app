@@ -34,6 +34,8 @@ class OpenAIFoodAnalyzer:
     async def analyze(self, image: PreparedImage) -> FoodAnalysis:
         """Send one prepared image and return its parsed Pydantic output."""
 
+        # Domain instructions stay in the system prompt; the user message is
+        # deliberately generic so endpoint wording cannot change analysis rules.
         request_input: ResponseInputParam = [
             {
                 "role": "system",
@@ -56,12 +58,16 @@ class OpenAIFoodAnalyzer:
         ]
 
         try:
+            # responses.parse validates Structured Output directly against
+            # FoodAnalysis, avoiding manual JSON decoding in this adapter.
             response = await self.client.responses.parse(
                 model=self.model,
                 input=request_input,
                 text_format=FoodAnalysis,
             )
         except (APIConnectionError, APITimeoutError, RateLimitError) as exc:
+            # Log only failure metadata. request_input contains the Base64 Data
+            # URL and must never be included in application logs.
             logger.error(
                 "Falha temporária na comunicação com a OpenAI: %s",
                 type(exc).__name__,
