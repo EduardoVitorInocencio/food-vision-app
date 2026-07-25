@@ -49,6 +49,8 @@ def make_service(
 ) -> ChatService:
     """Build a ChatService with local collaborators for unit tests."""
 
+    # Register only the nutrition module so intent fallback and unavailable
+    # branches remain easy to assert.
     return ChatService(
         intent_router=IntentRouter(),
         context_manager=manager,
@@ -64,6 +66,8 @@ async def test_executes_registered_module_and_updates_context() -> None:
     module = StubNutritionModule()
     manager = ContextManager()
     service = make_service(module, manager)
+    # Mirror a real upload object so the service exercises the same path as
+    # the API route.
     image = UploadFile(file=io.BytesIO(b"image"), filename="food.jpg")
 
     response = await service.send_message(
