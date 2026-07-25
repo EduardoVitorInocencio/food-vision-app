@@ -1,1 +1,1 @@
-
+"""Implemented nutrition analysis module."""
