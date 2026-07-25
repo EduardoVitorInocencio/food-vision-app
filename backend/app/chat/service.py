@@ -57,15 +57,21 @@ class ChatService:
             EmptyChatMessageError: When neither text nor image is present.
         """
 
+        # Normalize whitespace here so routes and modules receive the same
+        # definition of an empty textual interaction.
         normalized_message = message.strip() if message else None
         if not normalized_message and image is None:
             raise EmptyChatMessageError
 
+        # ID generation belongs to the response boundary, keeping the service
+        # independent from a particular identifier format.
         current_id = self.response_builder.ensure_conversation_id(conversation_id)
         context = await self.context_manager.get(current_id)
         intent = await self.intent_router.detect(
             normalized_message,
             has_image=image is not None,
+            # The registry is the source of truth for availability; the
+            # presence of an empty package never makes a module executable.
             available_modules=set(self.modules),
         )
         module = self.modules.get(intent)
@@ -84,6 +90,9 @@ class ChatService:
         else:
             response = self.response_builder.unavailable(current_id, intent)
 
+        # Persist every conversational outcome, including unavailable and
+        # unknown intents, while module-specific state is merged only after a
+        # successful execution.
         await self.context_manager.update(
             current_id,
             user_message=normalized_message,
