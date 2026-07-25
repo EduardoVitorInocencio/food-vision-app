@@ -1,3 +1,4 @@
+# Runtime package metadata and production dependencies.
 [project]
 name = "food-vision-api"
 version = "0.1.0"
@@ -14,6 +15,7 @@ dependencies = [
     "uvicorn>=0.40.0",
 ]
 
+# Development-only quality and test tooling.
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
@@ -23,9 +25,11 @@ dev = [
     "ruff>=0.14.14",
 ]
 
+# Test discovery remains scoped to the backend suite.
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+# Shared style baseline for linting and formatting.
 [tool.ruff]
 line-length = 88
 target-version = "py311"
@@ -33,6 +37,7 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
+# Strict static typing applies to the application package.
 [tool.mypy]
 python_version = "3.11"
 strict = true
@@ -41,5 +46,6 @@ strict = true
 requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
+# Package discovery includes every app subpackage.
 [tool.setuptools.packages.find]
 include = ["app*"]
