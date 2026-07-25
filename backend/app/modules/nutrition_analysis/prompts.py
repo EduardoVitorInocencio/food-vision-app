@@ -1,5 +1,7 @@
 """Nutrition analysis prompt."""
 
+# Keep the domain instruction centralized so every analysis request uses the
+# same safety and output rules.
 FOOD_ANALYSIS_SYSTEM_PROMPT = """
 Você é um sistema especializado em análise visual de alimentos.
 
