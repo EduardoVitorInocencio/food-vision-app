@@ -20,6 +20,8 @@ from app.services.image_preprocessor import PreparedImage
 
 
 def make_analysis() -> FoodAnalysis:
+    """Create a deterministic nutrition analysis fixture."""
+
     return FoodAnalysis(
         dish_name="Arroz",
         description="Porção de arroz.",
@@ -36,6 +38,8 @@ def make_analysis() -> FoodAnalysis:
 
 @pytest.mark.asyncio
 async def test_service_orchestrates_preprocessor_and_analyzer() -> None:
+    """Pass the prepared image from preprocessor to analyzer exactly once."""
+
     prepared = PreparedImage(
         data_url="data:image/jpeg;base64,ZmFrZQ==",
         width=100,
@@ -59,6 +63,8 @@ async def test_service_orchestrates_preprocessor_and_analyzer() -> None:
 
 @pytest.mark.asyncio
 async def test_chat_adapter_reuses_food_analysis_service() -> None:
+    """Reuse service output for chat data, context, and answer text."""
+
     analysis = make_analysis()
     service = AsyncMock()
     service.analyze.return_value = analysis
