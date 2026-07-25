@@ -14,6 +14,8 @@ from app.modules.nutrition_analysis.schemas import (
 
 
 def test_schema_serializes_public_contract() -> None:
+    """Serialize enums and numeric fields through the public contract."""
+
     analysis = FoodAnalysis(
         dish_name="Fruta",
         description="Uma fruta.",
@@ -35,16 +37,22 @@ def test_schema_serializes_public_contract() -> None:
 
 
 def test_calorie_range_rejects_inverted_values() -> None:
+    """Reject a calorie range whose minimum exceeds its maximum."""
+
     with pytest.raises(ValidationError):
         CalorieRange(min=500, max=100)
 
 
 def test_nutrition_rejects_non_finite_values() -> None:
+    """Reject infinite nutritional estimates."""
+
     with pytest.raises(ValidationError):
         NutritionEstimate(calories=math.inf)
 
 
 def test_analysis_rejects_total_calories_outside_range() -> None:
+    """Reject totals that fall outside the declared calorie range."""
+
     with pytest.raises(ValidationError):
         FoodAnalysis(
             dish_name="Inconsistente",
