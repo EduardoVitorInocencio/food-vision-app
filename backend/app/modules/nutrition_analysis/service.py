@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 class FoodAnalyzer(Protocol):
     """Contract for analyzers that produce a validated food analysis."""
 
-    async def analyze(self, image: PreparedImage) -> FoodAnalysis: ...
+    async def analyze(self, image: PreparedImage) -> FoodAnalysis:
+        """Analyze one prepared image."""
+
+        ...
 
 
 class FoodAnalysisService:
@@ -27,6 +30,8 @@ class FoodAnalysisService:
         image_preprocessor: ImagePreprocessor,
         analyzer: FoodAnalyzer,
     ) -> None:
+        """Initialize the service with image preparation and analysis ports."""
+
         self.image_preprocessor = image_preprocessor
         self.analyzer = analyzer
 
@@ -49,6 +54,8 @@ class NutritionAnalysisModule:
     """Adapt the existing nutrition service to the common chat contract."""
 
     def __init__(self, service: FoodAnalysisService) -> None:
+        """Initialize the adapter around the existing analysis service."""
+
         self.service = service
 
     async def execute(
