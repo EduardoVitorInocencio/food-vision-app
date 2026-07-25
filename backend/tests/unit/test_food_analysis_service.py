@@ -12,7 +12,10 @@ from app.modules.nutrition_analysis.schemas import (
     FoodAnalysis,
     NutritionEstimate,
 )
-from app.modules.nutrition_analysis.service import FoodAnalysisService
+from app.modules.nutrition_analysis.service import (
+    FoodAnalysisService,
+    NutritionAnalysisModule,
+)
 from app.services.image_preprocessor import PreparedImage
 
 
@@ -52,3 +55,23 @@ async def test_service_orchestrates_preprocessor_and_analyzer() -> None:
     assert result == expected
     preprocessor.prepare.assert_awaited_once_with(upload)
     analyzer.analyze.assert_awaited_once_with(prepared)
+
+
+@pytest.mark.asyncio
+async def test_chat_adapter_reuses_food_analysis_service() -> None:
+    analysis = make_analysis()
+    service = AsyncMock()
+    service.analyze.return_value = analysis
+    module = NutritionAnalysisModule(service)
+    upload = UploadFile(file=io.BytesIO(b"image"), filename="food.jpg")
+
+    result = await module.execute(
+        message="Quantas calorias?",
+        image=upload,
+        context=AsyncMock(),
+    )
+
+    assert result.data == analysis.model_dump(mode="json")
+    assert result.context_updates["last_nutrition_analysis"] == result.data
+    assert "200 kcal" in result.answer
+    service.analyze.assert_awaited_once_with(upload)

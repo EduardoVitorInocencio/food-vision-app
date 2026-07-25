@@ -1,0 +1,53 @@
+"""Shared chat contracts."""
+
+from enum import StrEnum
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ChatSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class ChatIntent(StrEnum):
+    NUTRITION_ANALYSIS = "nutrition_analysis"
+    FOOD_IDENTIFICATION = "food_identification"
+    ALLERGEN_ANALYSIS = "allergen_analysis"
+    MEAL_COMPARISON = "meal_comparison"
+    KNOWLEDGE_RAG = "knowledge_rag"
+    GENERAL_CHAT = "general_chat"
+    UNKNOWN = "unknown"
+
+
+class ModuleResult(ChatSchema):
+    answer: str
+    intent: ChatIntent
+    module: str
+    data: dict[str, Any] = Field(default_factory=dict)
+    context_updates: dict[str, Any] = Field(default_factory=dict)
+    suggested_actions: list[str] = Field(default_factory=list)
+
+
+class ChatResponse(ChatSchema):
+    conversation_id: str
+    message_id: str
+    role: Literal["assistant"] = "assistant"
+    answer: str
+    intent: ChatIntent
+    module: str
+    data: dict[str, Any] = Field(default_factory=dict)
+    suggested_actions: list[str] = Field(default_factory=list)
+
+
+class ContextMessage(ChatSchema):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ChatContext(ChatSchema):
+    conversation_id: str
+    messages: list[ContextMessage] = Field(default_factory=list)
+    last_intent: ChatIntent | None = None
+    last_module: str | None = None
+    state: dict[str, Any] = Field(default_factory=dict)

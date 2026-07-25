@@ -70,6 +70,12 @@ class ConfigurationError(ApplicationError):
     default_message = "O serviço de análise não está configurado."
 
 
+class EmptyChatMessageError(ApplicationError):
+    status_code = HTTPStatus.UNPROCESSABLE_ENTITY
+    error_code = "empty_chat_message"
+    default_message = "Envie uma mensagem ou uma imagem."
+
+
 async def application_error_handler(
     _: Request,
     exc: Exception,
