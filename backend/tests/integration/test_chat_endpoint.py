@@ -49,6 +49,8 @@ class StubNutritionModule:
 def clear_dependency_overrides() -> Generator[None]:
     """Reset FastAPI dependency overrides after each test."""
 
+    # Start every test with a clean override registry so one case cannot leak
+    # its local service into the next request.
     yield
     app.dependency_overrides.clear()
 
@@ -56,6 +58,8 @@ def clear_dependency_overrides() -> Generator[None]:
 def override_chat_service(module: StubNutritionModule) -> None:
     """Install a fully local ChatService dependency override."""
 
+    # Keep the route entirely in-process so the test only validates request
+    # plumbing and response shape.
     service = ChatService(
         intent_router=IntentRouter(),
         context_manager=ContextManager(),
@@ -74,6 +78,8 @@ async def test_accepts_image_with_optional_message(message: str | None) -> None:
     override_chat_service(module)
     data = {"message": message} if message else {}
 
+    # Exercise the FastAPI app through ASGITransport so the test stays
+    # hermetic and does not require a live server.
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport,
@@ -99,6 +105,7 @@ async def test_rejects_request_without_message_or_image() -> None:
 
     override_chat_service(StubNutritionModule())
 
+    # The same in-process client can assert the public error envelope.
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport,
