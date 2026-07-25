@@ -28,4 +28,6 @@ async def send_chat_message(
         )
     finally:
         if image is not None:
+            # Close the upload here so request-scoped files are released even
+            # when the downstream service raises.
             await image.close()
