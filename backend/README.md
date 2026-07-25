@@ -115,6 +115,17 @@ quando a aplicação reinicia.
 RAG, fine-tuning, autenticação, banco de dados, Redis e persistência de histórico
 não estão implementados.
 
+### Guia técnico
+
+O documento
+[`docs/CHAT_FLOW_AND_MODULE_IMPLEMENTATION_GUIDE.md`](docs/CHAT_FLOW_AND_MODULE_IMPLEMENTATION_GUIDE.md)
+descreve a sequência completa de execução do chat, registro e lifecycle dos
+módulos, contexto em memória, processamento de imagens, integração OpenAI,
+estratégia de testes e um roteiro prático para implementar capacidades futuras.
+
+Os exemplos planejados no guia não representam funcionalidades disponíveis. O
+registro atual do chat continua contendo somente `nutrition_analysis`.
+
 ### Fluxo nutricional
 
 1. O cliente envia `multipart/form-data` com o campo `image`.
