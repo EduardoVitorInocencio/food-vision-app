@@ -27,6 +27,8 @@ def get_openai_client() -> AsyncOpenAI:
     A chave da API e demais configurações são obtidas
     por meio das variáveis de ambiente da aplicação.
     """
+    # Construction stays lazy: starting the API or calling /health does not
+    # require credentials or open an external client.
     settings = get_settings()
 
     return create_openai_client(settings)
@@ -107,6 +109,8 @@ def get_chat_service() -> ChatService:
         intent_router=get_intent_router(),
         context_manager=get_context_manager(),
         response_builder=get_response_builder(),
+        # This explicit registry is the capability boundary. Future package
+        # placeholders remain unavailable until a real adapter is added here.
         modules={
             ChatIntent.NUTRITION_ANALYSIS: get_nutrition_analysis_module(),
         },
@@ -116,12 +120,15 @@ def get_chat_service() -> ChatService:
 async def close_services() -> None:
     """Release shared resources and clear dependency caches at shutdown."""
 
+    # Context is process-local and intentionally discarded at shutdown.
     if get_context_manager.cache_info().currsize:
         await get_context_manager().clear_all()
 
     if get_openai_client.cache_info().currsize:
         await get_openai_client().close()
 
+    # Clear composed dependents before their underlying resources so the next
+    # application instance cannot retain references to closed objects.
     get_chat_service.cache_clear()
     get_response_builder.cache_clear()
     get_intent_router.cache_clear()
