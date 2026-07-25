@@ -62,6 +62,7 @@ class StubAnalyzer:
 def clear_dependency_overrides() -> None:
     """Reset FastAPI dependency overrides after each test."""
 
+    # Keep the shared application object clean between integration cases.
     yield
     app.dependency_overrides.clear()
 
@@ -70,6 +71,7 @@ def clear_dependency_overrides() -> None:
 async def test_health_check() -> None:
     """Keep the unversioned health endpoint compatible."""
 
+    # Health should be reachable without touching any external dependency.
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport,
@@ -89,6 +91,7 @@ async def test_valid_upload_uses_overridden_service() -> None:
     service = FoodAnalysisService(ImagePreprocessor(), analyzer)
     app.dependency_overrides[get_food_analysis_service] = lambda: service
 
+    # Use the in-process client to validate the multipart upload path.
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport,
@@ -125,6 +128,8 @@ async def test_invalid_uploads_return_consistent_errors(
     service = FoodAnalysisService(ImagePreprocessor(), StubAnalyzer())
     app.dependency_overrides[get_food_analysis_service] = lambda: service
 
+    # The same endpoint path should surface the mapping for each invalid
+    # upload shape without touching OpenAI.
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport,
