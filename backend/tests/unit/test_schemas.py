@@ -5,7 +5,7 @@ import math
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.food_analysis import (
+from app.modules.nutrition_analysis.schemas import (
     CalorieRange,
     ConfidenceLevel,
     FoodAnalysis,

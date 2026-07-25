@@ -6,8 +6,8 @@ from openai import AsyncOpenAI
 
 from app.core.config import get_settings
 from app.integrations.openai.client import create_openai_client
-from app.integrations.openai.food_analyzer import OpenAIFoodAnalyzer
-from app.services.food_analysis_service import FoodAnalysisService
+from app.modules.nutrition_analysis.analyzer import OpenAIFoodAnalyzer
+from app.modules.nutrition_analysis.service import FoodAnalysisService
 from app.services.image_preprocessor import ImagePreprocessor
 
 

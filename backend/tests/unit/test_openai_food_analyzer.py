@@ -11,8 +11,8 @@ from app.core.exceptions import (
     InvalidOpenAIResponseError,
     OpenAIUnavailableError,
 )
-from app.integrations.openai.food_analyzer import OpenAIFoodAnalyzer
-from app.schemas.food_analysis import (
+from app.modules.nutrition_analysis.analyzer import OpenAIFoodAnalyzer
+from app.modules.nutrition_analysis.schemas import (
     CalorieRange,
     ConfidenceLevel,
     FoodAnalysis,

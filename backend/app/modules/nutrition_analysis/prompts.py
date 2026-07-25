@@ -1,6 +1,4 @@
-"""OpenAI prompts."""
-
-# app/integrations/openai/prompts.py
+"""Nutrition analysis prompt."""
 
 FOOD_ANALYSIS_SYSTEM_PROMPT = """
 Você é um sistema especializado em análise visual de alimentos.

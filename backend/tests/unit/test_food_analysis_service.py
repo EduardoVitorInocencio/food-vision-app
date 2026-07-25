@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi import UploadFile
 
-from app.schemas.food_analysis import (
+from app.modules.nutrition_analysis.schemas import (
     CalorieRange,
     ConfidenceLevel,
     FoodAnalysis,
     NutritionEstimate,
 )
-from app.services.food_analysis_service import FoodAnalysisService
+from app.modules.nutrition_analysis.service import FoodAnalysisService
 from app.services.image_preprocessor import PreparedImage
 
 

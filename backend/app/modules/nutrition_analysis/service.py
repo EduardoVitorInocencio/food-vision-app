@@ -5,7 +5,7 @@ from typing import Protocol
 
 from fastapi import UploadFile
 
-from app.schemas.food_analysis import FoodAnalysis
+from app.modules.nutrition_analysis.schemas import FoodAnalysis
 from app.services.image_preprocessor import ImagePreprocessor, PreparedImage
 
 logger = logging.getLogger(__name__)

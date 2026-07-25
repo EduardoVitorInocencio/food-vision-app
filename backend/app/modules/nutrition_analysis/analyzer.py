@@ -17,8 +17,8 @@ from app.core.exceptions import (
     OpenAIServiceError,
     OpenAIUnavailableError,
 )
-from app.integrations.openai.prompts import FOOD_ANALYSIS_SYSTEM_PROMPT
-from app.schemas.food_analysis import FoodAnalysis
+from app.modules.nutrition_analysis.prompts import FOOD_ANALYSIS_SYSTEM_PROMPT
+from app.modules.nutrition_analysis.schemas import FoodAnalysis
 from app.services.image_preprocessor import PreparedImage
 
 logger = logging.getLogger(__name__)

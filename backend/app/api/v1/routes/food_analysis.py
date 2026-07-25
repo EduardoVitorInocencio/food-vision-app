@@ -5,8 +5,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, UploadFile
 
 from app.dependencies.services import get_food_analysis_service
-from app.schemas.food_analysis import FoodAnalysis
-from app.services.food_analysis_service import FoodAnalysisService
+from app.modules.nutrition_analysis.schemas import FoodAnalysis
+from app.modules.nutrition_analysis.service import FoodAnalysisService
 
 router = APIRouter(tags=["food-analysis"])
 
