@@ -9,6 +9,7 @@ from app.core.config import Settings
 def test_cors_origins_accept_comma_separated_environment_value() -> None:
     """Parse and trim comma-separated CORS origins."""
 
+    # Exercise the validation alias path the application uses in production.
     settings = Settings(CORS_ORIGINS="http://localhost:3000, https://example.com")
 
     assert settings.cors_origins == [
