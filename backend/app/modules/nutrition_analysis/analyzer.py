@@ -25,11 +25,15 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIFoodAnalyzer:
+    """Request and validate a structured food analysis from OpenAI."""
+
     def __init__(self, client: AsyncOpenAI, model: str) -> None:
         self.client = client
         self.model = model
 
     async def analyze(self, image: PreparedImage) -> FoodAnalysis:
+        """Send one prepared image and return its parsed Pydantic output."""
+
         request_input: ResponseInputParam = [
             {
                 "role": "system",

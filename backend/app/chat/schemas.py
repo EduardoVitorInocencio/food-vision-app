@@ -7,10 +7,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChatSchema(BaseModel):
+    """Strict base model for chat contracts."""
+
     model_config = ConfigDict(extra="forbid")
 
 
 class ChatIntent(StrEnum):
+    """Intent values exposed by the chat contract."""
+
     NUTRITION_ANALYSIS = "nutrition_analysis"
     FOOD_IDENTIFICATION = "food_identification"
     ALLERGEN_ANALYSIS = "allergen_analysis"
@@ -21,6 +25,8 @@ class ChatIntent(StrEnum):
 
 
 class ModuleResult(ChatSchema):
+    """Internal result returned by a registered chat module."""
+
     answer: str
     intent: ChatIntent
     module: str
@@ -30,6 +36,8 @@ class ModuleResult(ChatSchema):
 
 
 class ChatResponse(ChatSchema):
+    """Uniform assistant response returned to API clients."""
+
     conversation_id: str
     message_id: str
     role: Literal["assistant"] = "assistant"
@@ -41,11 +49,15 @@ class ChatResponse(ChatSchema):
 
 
 class ContextMessage(ChatSchema):
+    """Minimal message stored in the temporary conversation history."""
+
     role: Literal["user", "assistant"]
     content: str
 
 
 class ChatContext(ChatSchema):
+    """Serializable in-memory state for one conversation."""
+
     conversation_id: str
     messages: list[ContextMessage] = Field(default_factory=list)
     last_intent: ChatIntent | None = None

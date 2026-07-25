@@ -22,7 +22,11 @@ _UNAVAILABLE_MESSAGES = {
 
 
 class ResponseBuilder:
+    """Construct the uniform public response without executing business logic."""
+
     def ensure_conversation_id(self, conversation_id: str | None) -> str:
+        """Preserve a supplied conversation ID or generate a new UUID."""
+
         return conversation_id or str(uuid4())
 
     def from_module(
@@ -30,6 +34,8 @@ class ResponseBuilder:
         conversation_id: str,
         result: ModuleResult,
     ) -> ChatResponse:
+        """Convert a module result into a public assistant response."""
+
         return ChatResponse(
             conversation_id=conversation_id,
             message_id=str(uuid4()),
@@ -45,6 +51,8 @@ class ResponseBuilder:
         conversation_id: str,
         intent: ChatIntent,
     ) -> ChatResponse:
+        """Build a safe response for a recognized but unregistered module."""
+
         return ChatResponse(
             conversation_id=conversation_id,
             message_id=str(uuid4()),
@@ -57,6 +65,8 @@ class ResponseBuilder:
         )
 
     def unknown(self, conversation_id: str) -> ChatResponse:
+        """Build the default response for an unrecognized request."""
+
         return ChatResponse(
             conversation_id=conversation_id,
             message_id=str(uuid4()),

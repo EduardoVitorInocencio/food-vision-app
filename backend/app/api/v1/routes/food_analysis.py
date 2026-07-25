@@ -22,6 +22,8 @@ async def analyze_food(
         Depends(get_food_analysis_service),
     ],
 ) -> FoodAnalysis:
+    """Analyze one food image through the compatibility endpoint."""
+
     try:
         return await service.analyze(image)
     finally:

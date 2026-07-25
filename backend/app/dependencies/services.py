@@ -73,26 +73,36 @@ def get_food_analysis_service() -> FoodAnalysisService:
 
 @lru_cache
 def get_nutrition_analysis_module() -> NutritionAnalysisModule:
+    """Build the chat adapter around the existing nutrition service."""
+
     return NutritionAnalysisModule(get_food_analysis_service())
 
 
 @lru_cache
 def get_context_manager() -> ContextManager:
+    """Provide the process-local conversation context store."""
+
     return ContextManager()
 
 
 @lru_cache
 def get_intent_router() -> IntentRouter:
+    """Provide the deterministic chat intent router."""
+
     return IntentRouter()
 
 
 @lru_cache
 def get_response_builder() -> ResponseBuilder:
+    """Provide the stateless chat response builder."""
+
     return ResponseBuilder()
 
 
 @lru_cache
 def get_chat_service() -> ChatService:
+    """Compose chat orchestration with only implemented modules registered."""
+
     return ChatService(
         intent_router=get_intent_router(),
         context_manager=get_context_manager(),
@@ -104,6 +114,8 @@ def get_chat_service() -> ChatService:
 
 
 async def close_services() -> None:
+    """Release shared resources and clear dependency caches at shutdown."""
+
     if get_context_manager.cache_info().currsize:
         await get_context_manager().clear_all()
 

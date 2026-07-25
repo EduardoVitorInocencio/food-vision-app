@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Manage application startup logging and shared-service shutdown."""
+
     logger.info("Aplicação iniciada")
     try:
         yield
@@ -28,6 +30,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    """Build the FastAPI application with middleware, handlers, and routers."""
+
     settings = settings or get_settings()
     configure_logging(settings.log_level)
 
@@ -50,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Health remains unversioned so infrastructure probes keep a stable path.
     application.include_router(health_router)
     application.include_router(
         api_v1_router,

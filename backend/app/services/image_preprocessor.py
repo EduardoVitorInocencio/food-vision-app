@@ -1,3 +1,5 @@
+"""Shared validation and normalization for uploaded food images."""
+
 import base64
 import io
 import warnings
@@ -19,6 +21,8 @@ from app.core.exceptions import (
 
 @dataclass(frozen=True)
 class PreparedImage:
+    """Normalized image payload and safe processing metadata."""
+
     data_url: str
     width: int
     height: int
@@ -26,6 +30,8 @@ class PreparedImage:
 
 
 class ImagePreprocessor:
+    """Validate uploads and convert supported images into bounded JPEG data URLs."""
+
     ALLOWED_CONTENT_TYPES = {
         "image/jpeg",
         "image/png",
@@ -42,6 +48,13 @@ class ImagePreprocessor:
         self.max_dimension = max_dimension
 
     async def prepare(self, upload: UploadFile) -> PreparedImage:
+        """
+        Validate and prepare an uploaded image without blocking the event loop.
+
+        Pillow processing runs in a threadpool because decoding and encoding
+        are synchronous CPU-bound operations.
+        """
+
         if upload.content_type not in self.ALLOWED_CONTENT_TYPES:
             raise UnsupportedImageFormatError("Utilize uma imagem JPEG, PNG ou WebP.")
 
@@ -74,6 +87,8 @@ class ImagePreprocessor:
             raise ImageProcessingError() from exc
 
     def _process_content(self, content: bytes) -> PreparedImage:
+        """Verify bytes, normalize pixels, and encode the prepared Data URL."""
+
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
 

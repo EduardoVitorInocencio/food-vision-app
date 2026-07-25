@@ -20,6 +20,8 @@ class ContextManager:
         self._lock = asyncio.Lock()
 
     async def get(self, conversation_id: str) -> ChatContext:
+        """Return an isolated copy of a conversation, creating it if absent."""
+
         async with self._lock:
             context = self._contexts.get(conversation_id)
             if context is None:
@@ -37,6 +39,8 @@ class ContextManager:
         module: str,
         context_updates: dict[str, Any] | None = None,
     ) -> ChatContext:
+        """Append bounded history and merge sanitized module state."""
+
         async with self._lock:
             context = self._contexts.setdefault(
                 conversation_id,
@@ -56,15 +60,21 @@ class ContextManager:
             return context.model_copy(deep=True)
 
     async def clear(self, conversation_id: str) -> None:
+        """Remove one conversation from process memory."""
+
         async with self._lock:
             self._contexts.pop(conversation_id, None)
 
     async def clear_all(self) -> None:
+        """Remove every in-memory conversation during application shutdown."""
+
         async with self._lock:
             self._contexts.clear()
 
 
 def _sanitize_mapping(values: dict[str, Any]) -> dict[str, Any]:
+    """Remove context keys that could retain uploads, secrets, or image data."""
+
     sanitized: dict[str, Any] = {}
     for key, value in values.items():
         normalized_key = key.lower()

@@ -11,6 +11,8 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
+    """Environment-backed application settings loaded from `backend/.env`."""
+
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env",
         env_file_encoding="utf-8",
@@ -72,6 +74,8 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: Any) -> list[str]:
+        """Normalize comma-separated or list-based CORS configuration."""
+
         if isinstance(value, str):
             origins = value.split(",")
         elif isinstance(value, list):
@@ -86,6 +90,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_cors(self) -> "Settings":
+        """Reject wildcard CORS configuration in production."""
+
         if self.environment.lower() == "production" and "*" in self.cors_origins:
             raise ValueError("CORS_ORIGINS não pode conter '*' em produção.")
         return self
@@ -93,4 +99,6 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Load and cache validated settings for the application process."""
+
     return Settings()

@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class SchemaModel(BaseModel):
+    """Strict base model for finite nutritional values."""
+
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
 
@@ -38,6 +40,8 @@ class CalorieRange(SchemaModel):
 
 
 class NutritionEstimate(SchemaModel):
+    """Estimated calories and nutrients for a component or full meal."""
+
     calories: float | None = Field(default=None, ge=0)
     protein_g: float | None = Field(default=None, ge=0)
     carbohydrates_g: float | None = Field(default=None, ge=0)
@@ -48,6 +52,8 @@ class NutritionEstimate(SchemaModel):
 
 
 class IngredientEstimate(SchemaModel):
+    """Visible or inferred ingredient with quantity and confidence."""
+
     name: str
     detection_type: DetectionType
     estimated_quantity: str | None = None
@@ -57,6 +63,8 @@ class IngredientEstimate(SchemaModel):
 
 
 class FoodComponent(SchemaModel):
+    """One independently described food component in a meal."""
+
     name: str
     description: str
     estimated_portion: str | None = None
@@ -67,6 +75,8 @@ class FoodComponent(SchemaModel):
 
 
 class FoodAnalysis(SchemaModel):
+    """Validated structured output for a complete food-image analysis."""
+
     dish_name: str
     description: str
     components: list[FoodComponent]

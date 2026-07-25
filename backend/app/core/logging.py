@@ -4,6 +4,8 @@ from logging.config import dictConfig
 
 
 def configure_logging(level: str = "INFO") -> None:
+    """Configure application and Uvicorn logs with one consistent format."""
+
     normalized_level = level.upper()
     dictConfig(
         {

@@ -12,6 +12,8 @@ from app.core.exceptions import EmptyChatMessageError
 
 
 class ChatModule(Protocol):
+    """Contract implemented by modules available to the chat orchestrator."""
+
     async def execute(
         self,
         *,
@@ -22,6 +24,8 @@ class ChatModule(Protocol):
 
 
 class ChatService:
+    """Route a chat interaction to one explicitly registered module."""
+
     def __init__(
         self,
         *,
@@ -42,6 +46,17 @@ class ChatService:
         image: UploadFile | None,
         conversation_id: str | None,
     ) -> ChatResponse:
+        """
+        Process a new chat interaction.
+
+        The method validates the input, retrieves conversation context,
+        detects intent, executes the selected module, updates context, and
+        returns the public response.
+
+        Raises:
+            EmptyChatMessageError: When neither text nor image is present.
+        """
+
         normalized_message = message.strip() if message else None
         if not normalized_message and image is None:
             raise EmptyChatMessageError

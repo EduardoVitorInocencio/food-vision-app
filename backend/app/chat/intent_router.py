@@ -23,12 +23,21 @@ _INTENT_TERMS: tuple[tuple[ChatIntent, tuple[str, ...]], ...] = (
 
 
 class IntentRouter:
+    """Classify chat input with deterministic, testable rules."""
+
     async def detect(
         self,
         message: str | None,
         has_image: bool,
         available_modules: set[ChatIntent],
     ) -> ChatIntent:
+        """
+        Detect intent without an additional model call.
+
+        Specific keyword rules take precedence over the image fallback, and
+        only a registered nutrition module can receive that fallback.
+        """
+
         normalized = _normalize(message)
 
         for intent, terms in _INTENT_TERMS:

@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 def create_openai_client(settings: Settings) -> AsyncOpenAI:
+    """Create the shared asynchronous client from validated settings."""
+
     if settings.openai_api_key is None:
         logger.error("OPENAI_API_KEY não está configurada")
         raise ConfigurationError()

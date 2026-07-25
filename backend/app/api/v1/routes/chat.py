@@ -18,6 +18,8 @@ async def send_chat_message(
     image: Annotated[UploadFile | None, File()] = None,
     conversation_id: Annotated[str | None, Form()] = None,
 ) -> ChatResponse:
+    """Process one multipart chat interaction and always close its upload."""
+
     try:
         return await service.send_message(
             message=message,

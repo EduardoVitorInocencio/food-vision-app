@@ -14,10 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 class FoodAnalyzer(Protocol):
+    """Contract for analyzers that produce a validated food analysis."""
+
     async def analyze(self, image: PreparedImage) -> FoodAnalysis: ...
 
 
 class FoodAnalysisService:
+    """Coordinate shared image preparation and nutritional analysis."""
+
     def __init__(
         self,
         image_preprocessor: ImagePreprocessor,
@@ -27,6 +31,8 @@ class FoodAnalysisService:
         self.analyzer = analyzer
 
     async def analyze(self, upload: UploadFile) -> FoodAnalysis:
+        """Prepare an upload and return its structured nutrition analysis."""
+
         logger.info("Iniciando análise de imagem")
         prepared = await self.image_preprocessor.prepare(upload)
         analysis = await self.analyzer.analyze(prepared)
@@ -40,7 +46,7 @@ class FoodAnalysisService:
 
 
 class NutritionAnalysisModule:
-    """Adapts the existing nutrition service to the chat contract."""
+    """Adapt the existing nutrition service to the common chat contract."""
 
     def __init__(self, service: FoodAnalysisService) -> None:
         self.service = service
@@ -52,6 +58,8 @@ class NutritionAnalysisModule:
         image: UploadFile | None,
         context: ChatContext,
     ) -> ModuleResult:
+        """Execute image analysis and expose its result as a chat module."""
+
         del message, context
         if image is None:
             raise EmptyChatMessageError("Envie uma imagem para análise nutricional.")
@@ -68,6 +76,8 @@ class NutritionAnalysisModule:
 
 
 def _build_nutrition_answer(analysis: FoodAnalysis) -> str:
+    """Derive conversational text from validated data without another API call."""
+
     calories = analysis.total_nutrition.calories
     if calories is not None:
         return (
