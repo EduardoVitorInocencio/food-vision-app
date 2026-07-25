@@ -22,6 +22,8 @@ from app.services.image_preprocessor import PreparedImage
 
 
 def make_analysis() -> FoodAnalysis:
+    """Create a structured analysis fixture."""
+
     return FoodAnalysis(
         dish_name="Salada",
         description="Salada simples.",
@@ -37,6 +39,8 @@ def make_analysis() -> FoodAnalysis:
 
 
 def make_image() -> PreparedImage:
+    """Create a prepared image fixture without real image bytes."""
+
     return PreparedImage(
         data_url="data:image/jpeg;base64,ZmFrZQ==",
         width=100,
@@ -47,6 +51,8 @@ def make_image() -> PreparedImage:
 
 @pytest.mark.asyncio
 async def test_analyzer_returns_structured_response() -> None:
+    """Return parsed output and send the expected multimodal contract."""
+
     expected = make_analysis()
     parse = AsyncMock(
         return_value=SimpleNamespace(
@@ -71,6 +77,8 @@ async def test_analyzer_returns_structured_response() -> None:
 
 @pytest.mark.asyncio
 async def test_analyzer_rejects_missing_output_parsed() -> None:
+    """Reject a response without Structured Output."""
+
     parse = AsyncMock(return_value=SimpleNamespace(output_parsed=None, id="resp_empty"))
     client = SimpleNamespace(responses=SimpleNamespace(parse=parse))
     analyzer = OpenAIFoodAnalyzer(client=client, model="gpt-4o-mini")
@@ -81,6 +89,8 @@ async def test_analyzer_rejects_missing_output_parsed() -> None:
 
 @pytest.mark.asyncio
 async def test_analyzer_maps_connection_error() -> None:
+    """Map SDK connection failures to the public unavailable error."""
+
     error = APIConnectionError(
         request=httpx.Request(
             "POST",
