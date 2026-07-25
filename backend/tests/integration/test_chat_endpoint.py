@@ -17,7 +17,11 @@ from app.main import app
 
 
 class StubNutritionModule:
+    """Record chat route inputs without invoking external services."""
+
     def __init__(self) -> None:
+        """Initialize empty input captures."""
+
         self.received_message: str | None = None
         self.received_image: UploadFile | None = None
 
@@ -28,6 +32,8 @@ class StubNutritionModule:
         image: UploadFile | None,
         context: ChatContext,
     ) -> ModuleResult:
+        """Capture module inputs and return a deterministic result."""
+
         del context
         self.received_message = message
         self.received_image = image
@@ -41,11 +47,15 @@ class StubNutritionModule:
 
 @pytest.fixture(autouse=True)
 def clear_dependency_overrides() -> Generator[None]:
+    """Reset FastAPI dependency overrides after each test."""
+
     yield
     app.dependency_overrides.clear()
 
 
 def override_chat_service(module: StubNutritionModule) -> None:
+    """Install a fully local ChatService dependency override."""
+
     service = ChatService(
         intent_router=IntentRouter(),
         context_manager=ContextManager(),
@@ -58,6 +68,8 @@ def override_chat_service(module: StubNutritionModule) -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("message", [None, "Quantas calorias tem este prato?"])
 async def test_accepts_image_with_optional_message(message: str | None) -> None:
+    """Accept an image alone or accompanied by text and close its upload."""
+
     module = StubNutritionModule()
     override_chat_service(module)
     data = {"message": message} if message else {}
@@ -83,6 +95,8 @@ async def test_accepts_image_with_optional_message(message: str | None) -> None:
 
 @pytest.mark.asyncio
 async def test_rejects_request_without_message_or_image() -> None:
+    """Return the controlled 422 error when both conditional fields are absent."""
+
     override_chat_service(StubNutritionModule())
 
     transport = httpx.ASGITransport(app=app)
