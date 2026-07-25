@@ -40,6 +40,7 @@ def make_analysis() -> FoodAnalysis:
 async def test_service_orchestrates_preprocessor_and_analyzer() -> None:
     """Pass the prepared image from preprocessor to analyzer exactly once."""
 
+    # Mock the two ports so the test only verifies orchestration and handoff.
     prepared = PreparedImage(
         data_url="data:image/jpeg;base64,ZmFrZQ==",
         width=100,
@@ -69,6 +70,7 @@ async def test_chat_adapter_reuses_food_analysis_service() -> None:
     service = AsyncMock()
     service.analyze.return_value = analysis
     module = NutritionAnalysisModule(service)
+    # Build the same upload object a route would hand to the adapter.
     upload = UploadFile(file=io.BytesIO(b"image"), filename="food.jpg")
 
     result = await module.execute(
