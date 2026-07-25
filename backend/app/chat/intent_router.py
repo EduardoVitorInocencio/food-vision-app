@@ -3,6 +3,9 @@
 from app.chat.schemas import ChatIntent
 
 _INTENT_TERMS: tuple[tuple[ChatIntent, tuple[str, ...]], ...] = (
+    # Keep specific, unavailable capabilities before the image fallback so a
+    # request such as "analyze allergens in this image" is not misrouted to
+    # nutrition merely because an upload is present.
     (
         ChatIntent.ALLERGEN_ANALYSIS,
         ("alergeno", "alergia", "alergico", "allergen", "allergy"),
@@ -40,10 +43,14 @@ class IntentRouter:
 
         normalized = _normalize(message)
 
+        # Terms are stored without accents because _normalize applies the same
+        # transformation to user input before this ordered comparison.
         for intent, terms in _INTENT_TERMS:
             if any(term in normalized for term in terms):
                 return intent
 
+        # Image-only interactions are the sole generic fallback currently
+        # supported, and only when nutrition is actually registered.
         if has_image and ChatIntent.NUTRITION_ANALYSIS in available_modules:
             return ChatIntent.NUTRITION_ANALYSIS
 
