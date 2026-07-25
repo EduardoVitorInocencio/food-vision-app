@@ -14,6 +14,8 @@ class ApplicationError(Exception):
     default_message = "Ocorreu um erro ao processar a solicitação."
 
     def __init__(self, message: str | None = None) -> None:
+        """Initialize the exception with a safe optional public message."""
+
         self.message = message or self.default_message
         super().__init__(self.message)
 
