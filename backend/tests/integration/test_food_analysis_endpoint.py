@@ -19,12 +19,16 @@ from app.services.image_preprocessor import ImagePreprocessor, PreparedImage
 
 
 def make_image() -> bytes:
+    """Create a valid in-memory PNG fixture."""
+
     with io.BytesIO() as buffer:
         Image.new("RGB", (100, 50), color="white").save(buffer, format="PNG")
         return buffer.getvalue()
 
 
 def make_analysis() -> FoodAnalysis:
+    """Create a deterministic public analysis result."""
+
     return FoodAnalysis(
         dish_name="Prato de teste",
         description="Descrição de teste.",
@@ -40,22 +44,32 @@ def make_analysis() -> FoodAnalysis:
 
 
 class StubAnalyzer:
+    """Capture prepared images and avoid real OpenAI calls."""
+
     def __init__(self) -> None:
+        """Initialize an empty image capture."""
+
         self.received_image: PreparedImage | None = None
 
     async def analyze(self, image: PreparedImage) -> FoodAnalysis:
+        """Capture the prepared image and return fixture data."""
+
         self.received_image = image
         return make_analysis()
 
 
 @pytest.fixture(autouse=True)
 def clear_dependency_overrides() -> None:
+    """Reset FastAPI dependency overrides after each test."""
+
     yield
     app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
 async def test_health_check() -> None:
+    """Keep the unversioned health endpoint compatible."""
+
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport,
@@ -69,6 +83,8 @@ async def test_health_check() -> None:
 
 @pytest.mark.asyncio
 async def test_valid_upload_uses_overridden_service() -> None:
+    """Route valid uploads through the overridden local service."""
+
     analyzer = StubAnalyzer()
     service = FoodAnalysisService(ImagePreprocessor(), analyzer)
     app.dependency_overrides[get_food_analysis_service] = lambda: service
@@ -104,6 +120,8 @@ async def test_invalid_uploads_return_consistent_errors(
     expected_status: int,
     expected_code: str,
 ) -> None:
+    """Map invalid uploads to stable HTTP statuses and error codes."""
+
     service = FoodAnalysisService(ImagePreprocessor(), StubAnalyzer())
     app.dependency_overrides[get_food_analysis_service] = lambda: service
 
