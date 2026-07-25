@@ -14,7 +14,11 @@ from app.core.exceptions import EmptyChatMessageError
 
 
 class StubNutritionModule:
+    """Track module execution and return deterministic nutrition data."""
+
     def __init__(self) -> None:
+        """Initialize call and context captures."""
+
         self.calls = 0
         self.context: ChatContext | None = None
 
@@ -25,6 +29,8 @@ class StubNutritionModule:
         image: UploadFile | None,
         context: ChatContext,
     ) -> ModuleResult:
+        """Record execution and return a valid module result."""
+
         self.calls += 1
         self.context = context
         assert image is not None
@@ -41,6 +47,8 @@ def make_service(
     module: StubNutritionModule,
     manager: ContextManager,
 ) -> ChatService:
+    """Build a ChatService with local collaborators for unit tests."""
+
     return ChatService(
         intent_router=IntentRouter(),
         context_manager=manager,
@@ -51,6 +59,8 @@ def make_service(
 
 @pytest.mark.asyncio
 async def test_executes_registered_module_and_updates_context() -> None:
+    """Execute the registered module and persist its context update."""
+
     module = StubNutritionModule()
     manager = ContextManager()
     service = make_service(module, manager)
@@ -71,6 +81,8 @@ async def test_executes_registered_module_and_updates_context() -> None:
 
 @pytest.mark.asyncio
 async def test_does_not_execute_unregistered_module() -> None:
+    """Return unavailable without executing the nutrition module."""
+
     module = StubNutritionModule()
     manager = ContextManager()
     service = make_service(module, manager)
@@ -89,6 +101,8 @@ async def test_does_not_execute_unregistered_module() -> None:
 
 @pytest.mark.asyncio
 async def test_rejects_empty_request() -> None:
+    """Reject interactions containing neither meaningful text nor image."""
+
     service = make_service(StubNutritionModule(), ContextManager())
 
     with pytest.raises(EmptyChatMessageError):
