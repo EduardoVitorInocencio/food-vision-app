@@ -13,6 +13,8 @@ class ContextManager:
     """Stores bounded context that is lost when the application restarts."""
 
     def __init__(self, max_messages: int = 20) -> None:
+        """Initialize an empty process-local store with a history limit."""
+
         if max_messages < 1:
             raise ValueError("max_messages deve ser maior que zero.")
         self._max_messages = max_messages
