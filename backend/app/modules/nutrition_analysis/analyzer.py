@@ -28,6 +28,8 @@ class OpenAIFoodAnalyzer:
     """Request and validate a structured food analysis from OpenAI."""
 
     def __init__(self, client: AsyncOpenAI, model: str) -> None:
+        """Initialize the analyzer with a shared client and model name."""
+
         self.client = client
         self.model = model
 
